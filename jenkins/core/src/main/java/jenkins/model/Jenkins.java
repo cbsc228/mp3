@@ -447,7 +447,7 @@ public class Jenkins extends AbstractCIBase implements DirectlyModifiableTopLeve
      */
     private volatile MyViewsTabBar myViewsTabBar = new DefaultMyViewsTabBar();
 	
-	public static void updateAndTrim(){
+	public static void updateAndTrim(Jenkins jenkins){
 		jenkins.updateComputerList();
         jenkins.trimLabels();
 	}
