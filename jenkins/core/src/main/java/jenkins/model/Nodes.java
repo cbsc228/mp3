@@ -112,7 +112,7 @@ public class Nodes implements Saveable {
                     Nodes.this.nodes.put(name, n);
                 }
                 Nodes.this.nodes.keySet().removeAll(toRemove); // directory clean up will be handled by save
-                Jenkins.updateAndTrim();
+                Jenkins.updateAndTrim(jenkins);
             }
         });
         save();
@@ -133,7 +133,7 @@ public class Nodes implements Saveable {
                 @Override
                 public void run() {
                     nodes.put(node.getNodeName(), node);
-                    Jenkins.updateAndTrim();
+                    Jenkins.updateAndTrim(jenkins);
                 }
             });
             // no need for a full save() so we just do the minimum
@@ -165,7 +165,7 @@ public class Nodes implements Saveable {
                         c.disconnect(OfflineCause.create(hudson.model.Messages._Hudson_NodeBeingRemoved()));
                     }
                     if (node == nodes.remove(node.getNodeName())) {
-                        Jenkins.updateAndTrim();
+                        Jenkins.updateAndTrim(jenkins);
                     }
                 }
             });
@@ -249,7 +249,7 @@ public class Nodes implements Saveable {
                     }
                 }
                 nodes.putAll(newNodes);
-                Jenkins.updateAndTrim();
+                Jenkins.updateAndTrim(jenkins);
             }
         });
     }
