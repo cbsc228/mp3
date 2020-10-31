@@ -378,8 +378,33 @@ public class UserTest {
          assertFalse("User should not be loaded.", contained);
     }
 
+    public User[] refactorHelperMethod(HudsonPrivateSecurityRealm[] realm){
+        GlobalMatrixAuthorizationStrategy auth = new GlobalMatrixAuthorizationStrategy();
+        j.jenkins.setAuthorizationStrategy(auth);
+        j.jenkins.setCrumbIssuer(null);
+        //HudsonPrivateSecurityRealm realm = new HudsonPrivateSecurityRealm(false);
+        j.jenkins.setSecurityRealm(realm[0]);
+        User user = null;
+        User user2 = null;
+        try {
+            user = realm[0].createAccount("John Smith", "password");
+            user2 = realm[0].createAccount("John Smith2", "password");
+            user2.save();
+        }catch (IOException e){
+            //error in creating account
+        }
+
+        auth.add(Jenkins.ADMINISTER, user.getId());
+        auth.add(Jenkins.READ, user2.getId());
+        SecurityContextHolder.getContext().setAuthentication(user.impersonate());
+
+        User[] result = {user, user2};
+        return result;
+    }
+
     @Test
     public void testDoConfigSubmit() throws Exception {
+        /*
         GlobalMatrixAuthorizationStrategy auth = new GlobalMatrixAuthorizationStrategy();   
         j.jenkins.setAuthorizationStrategy(auth);
         j.jenkins.setCrumbIssuer(null);
@@ -391,13 +416,17 @@ public class UserTest {
         auth.add(Jenkins.ADMINISTER, user.getId());
         auth.add(Jenkins.READ, user2.getId());
         SecurityContextHolder.getContext().setAuthentication(user.impersonate());
-        HtmlForm form = j.createWebClient().login(user.getId(), "password").goTo(user2.getUrl() + "/configure").getFormByName("config");
+         */
+        HudsonPrivateSecurityRealm[] realm = {new HudsonPrivateSecurityRealm(false)};
+        User[] users = refactorHelperMethod(realm);
+
+        HtmlForm form = j.createWebClient().login(users[0].getId(), "password").goTo(users[1].getUrl() + "/configure").getFormByName("config");
         form.getInputByName("_.fullName").setValueAttribute("Alice Smith");
         j.submit(form);
-        assertEquals("User should have full name Alice Smith.", "Alice Smith", user2.getFullName());
-        SecurityContextHolder.getContext().setAuthentication(user2.impersonate());
+        assertEquals("User should have full name Alice Smith.", "Alice Smith", users[1].getFullName());
+        SecurityContextHolder.getContext().setAuthentication(users[1].impersonate());
         try{
-            user.doConfigSubmit(null, null);
+            users[0].doConfigSubmit(null, null);
             fail("User should not have permission to configure antoher user.");
         }
         catch(Exception e){
@@ -405,16 +434,17 @@ public class UserTest {
                fail("AccessDeniedException should be thrown.");
             }
         }
-        form = j.createWebClient().login(user2.getId(), "password").goTo(user2.getUrl() + "/configure").getFormByName("config");
+        form = j.createWebClient().login(users[1].getId(), "password").goTo(users[1].getUrl() + "/configure").getFormByName("config");
         
         form.getInputByName("_.fullName").setValueAttribute("John");
         j.submit(form);
-        assertEquals("User should be albe to configure himself.", "John", user2.getFullName());
+        assertEquals("User should be albe to configure himself.", "John", users[1].getFullName());
 
     }
 
     @Test
     public void testDoDoDelete() throws Exception {
+        /*
         GlobalMatrixAuthorizationStrategy auth = new GlobalMatrixAuthorizationStrategy();   
         j.jenkins.setAuthorizationStrategy(auth);
         j.jenkins.setCrumbIssuer(null);
@@ -426,16 +456,20 @@ public class UserTest {
         auth.add(Jenkins.ADMINISTER, user.getId());
         auth.add(Jenkins.READ, user2.getId());
         SecurityContextHolder.getContext().setAuthentication(user.impersonate());
-        HtmlForm form = j.createWebClient().login(user.getId(), "password").goTo(user2.getUrl() + "/delete").getFormByName("delete");
+         */
+        HudsonPrivateSecurityRealm[] realm = {new HudsonPrivateSecurityRealm(false)};
+        User[] users = refactorHelperMethod(realm);
+
+        HtmlForm form = j.createWebClient().login(users[0].getId(), "password").goTo(users[1].getUrl() + "/delete").getFormByName("delete");
         j.submit(form);
-        assertFalse("User should be deleted from memory.", User.getAll().contains(user2));
-        assertFalse("User should be deleted with his persistent data.", user2.getConfigFile().exists());
-        User.reload();
-        assertNull("Deleted user should not be loaded.", User.get(user2.getId(),false, Collections.EMPTY_MAP));
-        user2 = realm.createAccount("John Smith2", "password");
-        SecurityContextHolder.getContext().setAuthentication(user2.impersonate());
+        assertFalse("User should be deleted from memory.", users[0].getAll().contains(users[1]));
+        assertFalse("User should be deleted with his persistent data.", users[1].getConfigFile().exists());
+        users[0].reload();
+        assertNull("Deleted user should not be loaded.", users[0].get(users[1].getId(),false, Collections.EMPTY_MAP));
+        users[1] = realm[0].createAccount("John Smith2", "password");
+        SecurityContextHolder.getContext().setAuthentication(users[1].impersonate());
         try{
-            user.doDoDelete(null, null);
+            users[0].doDoDelete(null, null);
             fail("User should not have permission to delete antoher user.");
         }
         catch(Exception e){
@@ -443,9 +477,9 @@ public class UserTest {
                fail("AccessDeniedException should be thrown.");
             }
         }
-        user.save();
+        users[0].save();
         JenkinsRule.WebClient client = j.createWebClient();
-        form = client.login(user.getId(), "password").goTo(user.getUrl() + "/delete").getFormByName("delete");
+        form = client.login(users[0].getId(), "password").goTo(users[0].getUrl() + "/delete").getFormByName("delete");
         try{
             j.submit(form);
             fail("User should not be able to delete himself");
@@ -453,10 +487,10 @@ public class UserTest {
         catch(FailingHttpStatusCodeException e){
             //ok exception should be thrown
         }
-        assertTrue("User should not delete himself from memory.", User.getAll().contains(user));
-        assertTrue("User should not delete his persistent data.", user.getConfigFile().exists());
-        User.reload();
-        assertNotNull("Deleted user should be loaded.",User.get(user.getId(),false, Collections.EMPTY_MAP));     
+        assertTrue("User should not delete himself from memory.", users[0].getAll().contains(users[0]));
+        assertTrue("User should not delete his persistent data.", users[0].getConfigFile().exists());
+        users[0].reload();
+        assertNotNull("Deleted user should be loaded.",users[0].get(users[0].getId(),false, Collections.EMPTY_MAP));
     }
 
     @Test
