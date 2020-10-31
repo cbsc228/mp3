@@ -1,0 +1,28 @@
+/mp3/jenkins/core/src/main/java/hudson/model/UpdateCenter.java
+
+1) This code smell is that these same 11 lines of code are repeated in the getAvailables()
+   function and in the getUpdates() function. It makes more sense to take the repeated lines
+   and make it a standalone function.
+
+/mp3/jenkins/core/src/main/java/jenkins/model
+
+2) All four instances of this repeated code were replaced with the encapulating function.
+
+/mp3/jenkins/core/src/main/java/jenkins/Jenkins
+
+3) This code smell is called feature envy because this function should really be in the 
+   Jenkins class rather than the Nodes class.
+
+/mp3/jenkins/core/src/main/java/jenkins/model/IdStrategy
+/mp3/jenkins/test/src/test/java/jenkins/model
+
+4) The repeated code was eliminated using a loop to handle the repeated cases.
+
+/mp3/jenkins/cli/src/main/java/hudson/cli/Connection.java
+
+5) Both of these were moved to a function where the differing parameter was made a parameter
+   of the function.
+
+/mp3/jenkins/test/src/test/java/hudson/model/UpdateTest.java
+
+6) The duplicate code in UpdateTest.java was removed and placed into a helper method
